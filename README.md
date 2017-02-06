@@ -10,5 +10,5 @@ Webpage to pwn emails!
 # Donate
 Consider donating to me for my efforts:
 - [PayPal](https://www.paypal.me/finlaydag33k)
-- [BTC](bitcoin:17f77AYHsQbdsB1Q6BbqPahJ8ZrjFLYH2j)
+- BTC: 17f77AYHsQbdsB1Q6BbqPahJ8ZrjFLYH2j
 - Just give me a beverage when we meet irl :)
