@@ -9,6 +9,40 @@
 		  }
 		  return $randomString;
 		}
+		function checkBL($POSTDATA,$config){
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, "https://www.spamhaus.org/drop/drop.txt"); // the the URL to cURL to send the request to
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // Prevent cURL from echoing the results to the main script
+			$result = curl_exec($ch); // Execute the cURL thingy!
+			curl_close($ch); // close cURL resource, and free up system resources
+			if ($result) {
+			   $array = explode("\n", $result);
+			}
+			array_splice($array, 0, 4);
+			$entries = array();
+			foreach($array as $entry){
+				$entry = explode(" ", $entry);
+				array_push($entries,$entry);
+			}
+			array_pop($entries); // remove the last entry from the array (it's empty anyways)
+			foreach($entries as $entry => $value){
+				$range = $this->cidrToRange($value[0]);
+				$low_ip = ip2long($range[0]);
+				$high_ip = ip2long($range[1]);
+				$check_ip = ip2long($POSTDATA["ip"]);
+				if ($check_ip <= $high_ip && $low_ip <= $check_ip) {
+					$blacklisted = true;
+					break;
+				}else{
+					$blacklisted = false;
+				}
+			}
+			if($blacklisted){
+				echo $POSTDATA["ip"] . " is blacklisted on SBL...";
+			}else{
+				echo $POSTDATA["ip"] . " is not blacklisted on SBL!";
+			}
+		}
 		function getDNS($hostname){
 			return dns_get_record($hostname, DNS_A);
 		}
@@ -252,4 +286,13 @@
 				echo "Target email can not be empty!";
 			}
 		}
+
+		function cidrToRange($cidr) {
+		    $range = array();
+		    $cidr = explode('/', $cidr);
+		    $range[0] = long2ip((ip2long($cidr[0])) & ((-1 << (32 - (int)$cidr[1]))));
+		    $range[1] = long2ip((ip2long($cidr[0])) + pow(2, (32 - (int)$cidr[1])) - 1);
+		    return $range;
+		}
+
 	}

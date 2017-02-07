@@ -2,7 +2,7 @@
 $(document).ready(function() {
 	$( "#getDNS" ).submit(function( event ) {
 		$.ajax({
-   		url: '<?php if($_SERVER['HTTPS']){echo "https://";}else{echo "http://";} echo $_SERVER['SERVER_NAME']; ?>/inc/php/submit.php?'+$('#getDNS').serialize()+'',
+   		url: '<?php if($_SERVER['HTTPS']){echo "https://";}else{echo "http://";} echo $_SERVER['SERVER_NAME']; ?>/inc/php/submit.php?'+$('#getDNS').serialize(),
 			success: function(data) {
       	$( "div.getDNS_result" ).html(data);
    		},

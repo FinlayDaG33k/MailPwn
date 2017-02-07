@@ -1,8 +1,9 @@
 # MailPwn
-Webpage to pwn emails!
+For all your mail pwning needs! (not yet though)
 
 # Good to know
 - Email might (and probably will) end-up in the recipient's SPAM folder.
+- Drop&Play
 - Script should be fool proof (I hope)
 - You can hold me liable for damages :D
 - I like Mountain Dew

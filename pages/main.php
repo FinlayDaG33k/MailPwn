@@ -53,5 +53,16 @@ $(document).ready(function () {
 				<?php include("pages/getdns.php"); ?>
 			</div>
 		</div>
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h3 class="panel-title">Check Blacklists <a data-toggle="collapse" data-target="#mxtest"><button type="button" class="pull-right btn btn-xs btn-info"><i class="fa fa-bars" aria-hidden="true"></i></button></a></h3>
+				</div>
+				<div id="mxtest" class="panel-body collapse in">
+					<?php include("pages/checkbl.php"); ?>
+				</div>
+			</div>
 	</div>
+</div>
+<div class="row">
+
 </div>

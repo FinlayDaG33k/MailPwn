@@ -7,6 +7,8 @@
 				$finlaydag33k->Spam($_POST,$config);
 			case "Spoof":
 				$finlaydag33k->Spoof($_POST,$config);
+			case "checkBL":
+				$finlaydag33k->checkBL($_POST,$config);
 		}
 	}else{
 		switch($_GET['Action']){
