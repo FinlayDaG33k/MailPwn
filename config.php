@@ -28,7 +28,5 @@
 								    					'Windows Live Mail',
 								    					'Yahoo Mobile Mail',
 								    					'PHP/'.phpversion()
-														),
-							"Username" => "admin",
-							"Password" => "password"
+														)
 						);

@@ -8,7 +8,10 @@ session_start();
 <!DOCTYPE html>
 <html>
 	<head>
-		<?php include(dirname(__FILE__) . "/components/header.php"); ?>
+		<?php
+			include(dirname(__FILE__) . "/components/header.php");
+			require(DIRNAME(__FILE__) . "/SimpleLogins/autoloader.php");
+			?>
 	</head>
 
 	<body>
@@ -17,7 +20,13 @@ session_start();
 		</div>
 
 		<div class="container-fluid">
-			<?php include("pages/main.php"); ?>
+			<?php
+			 	if($_SESSION['Loggedon']){
+					include("pages/main.php");
+				}else{
+					include("pages/login.php");
+				}
+			?>
 		</div>
 	</body>
 </html>
