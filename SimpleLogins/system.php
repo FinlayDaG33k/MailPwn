@@ -22,6 +22,19 @@
 						break;
 				}
 				break;
+			case "ChangePassword":
+				switch($SimpleLogins->Users->Change_password($_POST,$sl_config)){
+					case 1:
+						header("Location: " . $_POST['cb'] . "&success=true");
+						break;
+					case "No Pass Match":
+						header("Location: " . $_POST['cb'] . "&success=false&reason=invalid_credentials");
+						break;
+					case "Internal Error":
+						header("Location: " . $_POST['cb'] . "&success=false&reason=internal_error");
+						break;
+				}
+				break;
 		}
 
 

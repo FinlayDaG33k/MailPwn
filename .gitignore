@@ -4,3 +4,4 @@ SimpleLogins/lockfile
 
 # Ignore the IDE stuff
 .ftpconfig
+phpmyadmin
