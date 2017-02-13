@@ -48,6 +48,7 @@ if(file_exists(DIRNAME(__FILE__) . '/lockfile')){
   											`Email` varchar(64) NOT NULL,
   											`Password` varchar(255) NOT NULL,
   											`Session` varchar(64) NOT NULL,
+												`Reset_hash` varchar(16) NULL,
 												PRIMARY KEY (ID)
 											) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 		if($conn->query($create_tables)){
@@ -58,7 +59,7 @@ if(file_exists(DIRNAME(__FILE__) . '/lockfile')){
 		}
 
 		echo "Adding first user to tables... ";
-		$add_user = "INSERT INTO `".mysqli_real_escape_string($conn,$_POST['SQL_Prefix'])."Users` (`ID`, `Username`, `Email`, `Password`, `Session`) VALUES (NULL, '".mysqli_real_escape_string($conn,$_POST['Username'])."', '".mysqli_real_escape_string($conn,$_POST['Email'])."', '".mysqli_real_escape_string($conn,password_hash($_POST['Password'],PASSWORD_DEFAULT))."', '');";
+		$add_user = "INSERT INTO `".mysqli_real_escape_string($conn,$_POST['SQL_Prefix'])."Users` (`ID`, `Username`, `Email`, `Password`, `Session`,`Reset_hash`) VALUES (NULL, '".mysqli_real_escape_string($conn,$_POST['Username'])."', '".mysqli_real_escape_string($conn,$_POST['Email'])."', '".mysqli_real_escape_string($conn,password_hash($_POST['Password'],PASSWORD_DEFAULT))."', '',NULL);";
 		if($conn->query($add_user)){
 			echo "OK<br />";
 		}else{
@@ -71,12 +72,12 @@ if(file_exists(DIRNAME(__FILE__) . '/lockfile')){
 		}else{
 			$singlelogin = 0;
 		}
-		if(!empty($_POST['captcha_Sitekey'])){
+		if(!empty($_POST['captcha_Sitekey']) && !empty($_POST['captcha_Secret'])){
 			$captcha_enabled = 1;
 		}else{
 			$captcha_enabled = 0;
 		}
-		$config = "PD9waHANCg0KJHNsX2NvbmZpZyA9IAlhcnJheSgNCgkJCQkJCQkJLy8gU1FMIFNldHRpbmdzDQoJCQkJCQkJCSJTUUwiID0+CWFycmF5KA0KCQkJCQkJCQkJCQkJCQkiSG9zdCIgPT4gIntIT1NUfSIsDQoJCQkJCQkJCQkJCQkJCSJVc2VybmFtZSIgPT4gIntVU0VSTkFNRX0iLA0KCQkJCQkJCQkJCQkJCQkiUGFzc3dvcmQiID0+ICJ7UEFTU1dPUkR9IiwNCgkJCQkJCQkJCQkJCQkJIkRhdGFiYXNlIiA9PiAie0RBVEFCQVNFfSIsDQoJCQkJCQkJCQkJCQkJCSJQcmVmaXgiID0+ICJ7UFJFRklYfSIsDQoJCQkJCQkJCQkJCQkJCSJTaW5nbGVTZXNzaW9uIiA9PiB7U0lOR0xFU0VTU0lPTn0NCgkJCQkJCQkJCQkJCQkpLA0KCQkJCQkJCQkiQ2FwdGNoYSIgPT4gCWFycmF5KA0KCQkJCQkJCQkJCQkJCQkJCSJFbmFibGVkIiA9PiB7Q0FQVENIQV9FTkFCTEVEfSwNCgkJCQkJCQkJCQkJCQkJCQkiU2l0ZWtleSIgPT4gIntDQVBUQ0hBX1NJVEVfS0VZfSIsDQoJCQkJCQkJCQkJCQkJCQkJIlNlY3JldCIgPT4gIntDQVBUQ0hBX1NFQ1JFVH0iDQoJCQkJCQkJCQkJCQkJCQkpDQoJCQkJCQkJKTs=";
+		$config = "PD9waHANCiRzbF9jb25maWcgPSAJYXJyYXkoDQoJCQkJCQkJCS8vIFNRTCBTZXR0aW5ncw0KCQkJCQkJCQkiU1FMIiA9PglhcnJheSgNCgkJCQkJCQkJCQkJCQkJIkhvc3QiID0+ICJ7SE9TVH0iLA0KCQkJCQkJCQkJCQkJCQkiVXNlcm5hbWUiID0+ICJ7VVNFUk5BTUV9IiwNCgkJCQkJCQkJCQkJCQkJIlBhc3N3b3JkIiA9PiAie1BBU1NXT1JEfSIsDQoJCQkJCQkJCQkJCQkJCSJEYXRhYmFzZSIgPT4gIntEQVRBQkFTRX0iLA0KCQkJCQkJCQkJCQkJCQkiUHJlZml4IiA9PiAie1BSRUZJWH0iLA0KCQkJCQkJCQkJCQkJCQkiU2luZ2xlU2Vzc2lvbiIgPT4ge1NJTkdMRVNFU1NJT059DQoJCQkJCQkJCQkJCQkJKSwNCgkJCQkJCQkJIkNhcHRjaGEiID0+IAlhcnJheSgNCgkJCQkJCQkJCQkJCQkJCQkiRW5hYmxlZCIgPT4ge0NBUFRDSEFfRU5BQkxFRH0sDQoJCQkJCQkJCQkJCQkJCQkJIlNpdGVrZXkiID0+ICJ7Q0FQVENIQV9TSVRFX0tFWX0iLA0KCQkJCQkJCQkJCQkJCQkJCSJTZWNyZXQiID0+ICJ7Q0FQVENIQV9TRUNSRVR9Ig0KCQkJCQkJCQkJCQkJCQkJKSwNCgkJCQkJCQkJIlNNVFAiID0+CWFycmF5KA0KCQkJCQkJCQkJCQkJCQkiSG9zdCIgPT4gIntTTVRQX0hPU1R9IiwNCgkJCQkJCQkJCQkJCQkJIlVzZXJuYW1lIiA9PiAie1NNVFBfVVNFUk5BTUV9IiwNCgkJCQkJCQkJCQkJCQkJIlBhc3N3b3JkIiA9PiAie1NNVFBfUEFTU1dPUkR9IiwNCgkJCQkJCQkJCQkJCQkJIkZST00iID0+ICJ7U01UUF9GUk9NfSIsDQoJCQkJCQkJCQkJCQkJCSJGUk9NX0VNQUlMIiA9PiAie1NNVFBfRlJPTV9FTUFJTH0iLA0KCQkJCQkJCQkJCQkJCQkiUkVQTFlUTyIgPT4gIntTTVRQX1JFUExZVE99IiwNCgkJCQkJCQkJCQkJCQkJIlJFUExZVE9fRU1BSUwiID0+ICJ7U01UUF9SRVBMWVRPX0VNQUlMfSINCgkJCQkJCQkJCQkJCQkpDQoJCQkJCQkJKTs=";
 		$config = base64_decode($config); 																		// Decode the config template
 		$config = str_replace("{HOST}",$_POST['SQL_Host'],$config); 					// Replace {HOST} with the host entered by the user
 		$config = str_replace("{USERNAME}",$_POST['SQL_Username'],$config); 	// Replace {USERNAME} with the Username entered by the user
@@ -87,6 +88,13 @@ if(file_exists(DIRNAME(__FILE__) . '/lockfile')){
 		$config = str_replace("{CAPTCHA_ENABLED}",$captcha_enabled,$config); 			// Replace {PREFIX} with the captcha secret entered by the user
 		$config = str_replace("{CAPTCHA_SITE_KEY}",$_POST['captcha_Sitekey'],$config); 			// Replace {CAPTCHA_ENABLED} if the Captcha sitekey is entered by the user
 		$config = str_replace("{CAPTCHA_SECRET}",$_POST['captcha_Secret'],$config); 			// Replace {PREFIX} with the captcha secret entered by the user
+		$config = str_replace("{SMTP_HOST}",$_POST['SMTP_Host'],$config); 			// Replace {SMTP_HOST} with the SMTP host entered by the user
+		$config = str_replace("{SMTP_USERNAME}",$_POST['SMTP_Username'],$config); 			// Replace {SMTP_USERNAME} with the SMTP Username entered by the user
+		$config = str_replace("{SMTP_PASSWORD}",$_POST['SMTP_Password'],$config); 			// Replace {SMTP_PASSWORD} with the SMTP Password entered by the user
+		$config = str_replace("{SMTP_FROM}",$_POST['SMTP_From'],$config); 			// Replace {SMTP_FROM} with the SMTP From entered by the user
+		$config = str_replace("{SMTP_FROM_EMAIL}",$_POST['SMTP_FromEmail'],$config); 			// Replace {SMTP_FROM} with the SMTP From Email entered by the user
+		$config = str_replace("{SMTP_REPLYTO}",$_POST['SMTP_Replyto'],$config); 			// Replace {SMTP_REPLYTO} with the SMTP host entered by the user
+		$config = str_replace("{SMTP_REPLYTO_EMAIL}",$_POST['SMTP_ReplytoEmail'],$config); 			// Replace {SMTP_REPLYTO} with the SMTP host entered by the user
 		$file = fopen('config.php', 'w'); 																		// Open the config.php (or create it if it doesn exist)
 		fwrite($file,$config);																								// Write the config to config.php
 		fclose($file);																												// Close config.php
@@ -150,6 +158,23 @@ if(file_exists(DIRNAME(__FILE__) . '/lockfile')){
 			<input type="text" name="captcha_Sitekey"><br />
 			<label for="captcha_Secret">Secret</label>
 			<input type="password" name="captcha_Secret"><br />
+			<h1>SMTP Settings</h1>
+			<hr>
+			Leave these settings empty if you do not want to use SMTP (used for Password resets)!<br />
+			<label for="SMTP_Host">Host</label>
+			<input type="text" name="SMTP_Host"><br />
+			<label for="SMTP_Username">Username</label>
+			<input type="text" name="SMTP_Username"><br />
+			<label for="SMTP_Password">Password</label>
+			<input type="password" name="SMTP_Password"><br />
+			<label for="SMTP_From">From</label>
+			<input type="text" name="SMTP_From"><br />
+			<label for="SMTP_From">From Email</label>
+			<input type="text" name="SMTP_FromEmail"><br />
+			<label for="SMTP_Replyto">Reply-To</label>
+			<input type="text" name="SMTP_Replyto"><br />
+			<label for="SMTP_Replyto">Reply-To Email</label>
+			<input type="text" name="SMTP_ReplytoEmail"><br />
 			<h1>First User</h1>
 			<hr>
 			<label for="Username">Username</label>

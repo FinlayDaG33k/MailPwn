@@ -13,7 +13,23 @@
 				$server_proto = "http://";
 			}
 			$system_host = $_SERVER['HTTP_HOST'];
-			$system_dir = explode('?', $_SERVER['REQUEST_URI'], 2);
+
+			if(!empty($_POST['cb'])){
+				$system_dir = explode('?', $_POST['cb'], 2);
+				if(count($system_dir) >= 2){
+					$getsign = '&';
+				}else{
+					$getsign = '?';
+				}
+			}else{
+				$system_dir = explode('?', $_SERVER['REQUEST_URI'], 2);
+				if(count($system_dir) >= 2){
+					$getsign = '&';
+				}else{
+					$getsign = '?';
+				}
+			}
+
 
 			$sl_vars = 	array(
 										"Server_proto" => $server_proto,
@@ -21,10 +37,20 @@
 										"System_dir" => htmlentities($system_dir),
 										"System_dir_get" => $_SERVER['REQUEST_URI'],
 										"System_url" => htmlentities($server_proto . $system_host .$system_dir[0]. "SimpleLogins/system.php"),
+										"GET_sign" => $getsign,
 										"Captcha_form" => "<div class=\"g-recaptcha\" data-sitekey=\"".$sl_config['Captcha']['Sitekey']."\"></div>",
 										"Captcha_script" => "<script src='https://www.google.com/recaptcha/api.js'></script>"
 									);
 			return $sl_vars;
+		}
+		function generateRandomString($length = 10) {
+			$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			$charactersLength = strlen($characters);
+			$randomString = '';
+			for ($i = 0; $i < $length; $i++) {
+				$randomString .= $characters[rand(0, $charactersLength - 1)];
+			}
+			return $randomString;
 		}
 	}
 
@@ -93,7 +119,123 @@
 				return "No Pass Match";
 			}
 		}
-		function Reset_password(){}
+		function Forgot_password($POSTDATA, $config){
+			$SimpleLogins = new SimpleLogins();
+			$conn = $SimpleLogins->Database->Initialize($config['SQL']['Host'],$config['SQL']['Username'],$config['SQL']['Password'],$config['SQL']['Database']);
+
+			$sql = "SELECT * FROM `".mysqli_real_escape_string($conn,$config['SQL']['Prefix'])."Users` WHERE `Username`='".mysqli_real_escape_string($conn,$POSTDATA['Username'])."';";
+			$sql_output = $conn->query($sql);
+      if ($sql_output->num_rows > 0){
+        require (DIRNAME(__FILE__).'/phpmailer/PHPMailerAutoload.php');
+        $row = $sql_output->fetch_assoc();
+        $token = $SimpleLogins->generateRandomString(16);
+        $sql = "UPDATE `".mysqli_real_escape_string($conn,$config['SQL']['Prefix'])."Users` SET `Reset_hash` = '".mysqli_real_escape_string($conn,$token)."' WHERE `Username`='".mysqli_real_escape_string($conn,$POSTDATA['Username'])."';";
+				if ($conn->query($sql) === TRUE) {
+          //Create a new PHPMailer instance
+          $mail = new PHPMailer;
+          //Tell PHPMailer to use SMTP
+          $mail->isSMTP();
+          //Enable SMTP debugging
+          // 0 = off (for production use)
+          // 1 = client messages
+          // 2 = client and server messages
+          $mail->SMTPDebug = 0;
+          //Ask for HTML-friendly debug output
+        	$mail->Debugoutput = 'html';
+          //Set the hostname of the mail server
+          $mail->Host = $config['SMTP']['Host'];
+          $mail->SMTPOptions = array(
+            'ssl' => array(
+            	'verify_peer' => false,
+            	'verify_peer_name' => false,
+            	'allow_self_signed' => true
+          	)
+          );
+          // use
+          // $mail->Host = gethostbyname('smtp.gmail.com');
+          // if your network does not support SMTP over IPv6
+          //Set the SMTP port number - 587 for authenticated TLS, a.k.a. RFC4409 SMTP submission
+          $mail->Port = 587;
+          //Set the encryption system to use - ssl (deprecated) or tls
+          $mail->SMTPSecure = 'tls';
+          //Whether to use SMTP authentication
+          $mail->SMTPAuth = true;
+          //Username to use for SMTP authentication - use full email address for gmail
+          $mail->Username = $config['SMTP']['Username'];
+          //Password to use for SMTP authentication
+          $mail->Password = $config['SMTP']['Password'];
+          //Set who the message is to be sent from
+					if(!empty($config['SMTP']['FROM']) && !empty($config['SMTP']['FROM_EMAIL'])){
+          	$mail->setFrom($config['SMTP']['FROM_EMAIL'], $config['SMTP']['FROM']);
+					}else{
+						$mail->setFrom('noreply@'.htmlentities($_SERVER['HTTP_HOST']), 'SimpleLogins NoReply');
+					}
+          //Set an alternative reply-to address
+					if(!empty($config['SMTP']['REPLYTO']) && !empty($config['SMTP']['REPLYTO_EMAIL'])){
+          	$mail->addReplyTo($config['SMTP']['REPLYTO_EMAIL'], $config['SMTP']['REPLYTO']);
+					}else{
+						$mail->addReplyTo('webmaster@'.htmlentities($_SERVER['HTTP_HOST']), 'SimpleLogins NoReply');
+					}
+          //Set who the message is to be sent to
+          $mail->addAddress(htmlentities($row['Email']), htmlentities($_POST['inputUsername']));
+          //Set the subject line
+          $mail->Subject = $config['SMTP']['FROM'] . ' Password Reset';
+          //Read an HTML message body from an external file, convert referenced images to embedded,
+          //convert HTML into a basic plain-text alternative body
+          $resetlink = $SimpleLogins->sl_Vars()['Server_proto'] . $_SERVER['SERVER_NAME'] . "/?page=forgotpassword&username=" . $POSTDATA['Username'] . "&token=" .$token;
+					$htmlmsg = file_get_contents('Mailtemplates/forgotpassword.html');
+					$htmlmsg = str_replace("{USERNAME}",$row['Username'],$htmlmsg);
+					$htmlmsg = str_replace("{SITENAME}",$config['SMTP']['FROM'],$htmlmsg);
+					$htmlmsg = str_replace("{RESET_URL}",$resetlink,$htmlmsg);
+					$mail->msgHTML($htmlmsg);
+          //Replace the plain text body with one created manually
+          $mail->AltBody = $config['SMTP']['FROM'] . ' Password Reset';
+          //send the message, check for errors
+          if (!$mail->send()) {
+            //echo "Mailer Error: " . $mail->ErrorInfo;
+            return "Internal Error";
+          } else {
+            return 1;
+          }
+        }else{
+          return "Internal Error";
+        }
+      }else{
+        return "Invalid Credentials";
+      }
+		}
+		function Reset_password($POSTDATA, $config){
+			if($POSTDATA['NewPassword'] !== $POSTDATA['NewPasswordConfirm']){
+				return "No Pass Match";
+			}else{
+				$SimpleLogins = new SimpleLogins();
+				$conn = $SimpleLogins->Database->Initialize($config['SQL']['Host'],$config['SQL']['Username'],$config['SQL']['Password'],$config['SQL']['Database']);
+				$sql = "SELECT * FROM `".mysqli_real_escape_string($conn,$config['SQL']['Prefix'])."Users` WHERE `Username`='".mysqli_real_escape_string($conn,$POSTDATA['Username'])."' AND Reset_hash='".mysqli_real_escape_string($conn,$POSTDATA['Token'])."';";
+				$sql_output = $conn->query($sql);
+				if($sql_output->num_rows > 0){
+					$sql = "UPDATE `".mysqli_real_escape_string($conn,$config['SQL']['Prefix'])."Users` SET `Password`='".password_hash($POSTDATA['NewPassword'],PASSWORD_DEFAULT)."', `Reset_hash`='' WHERE `Username`='".mysqli_real_escape_string($conn,$POSTDATA['Username'])."';";
+					if($conn->query($sql)){
+						return 1;
+					}else{
+						return "Interlan Error";
+					}
+
+				}else{
+					return "Invalid Credentials";
+				}
+			}
+		}
+		function check_Resethash($DATA, $config){
+			$SimpleLogins = new SimpleLogins();
+			$conn = $SimpleLogins->Database->Initialize($config['SQL']['Host'],$config['SQL']['Username'],$config['SQL']['Password'],$config['SQL']['Database']);
+			$sql = "SELECT * FROM `".mysqli_real_escape_string($conn,$config['SQL']['Prefix'])."Users` WHERE `Username`='".mysqli_real_escape_string($conn,$DATA['username'])."' AND Reset_hash='".mysqli_real_escape_string($conn,$DATA['token'])."';";
+			$sql_output = $conn->query($sql);
+			if($sql_output->num_rows > 0){
+				return 1;
+			}else{
+				return 0;
+			}
+		}
 		function Check_Session($config){
 			$SimpleLogins = new SimpleLogins();
 			$conn = $SimpleLogins->Database->Initialize($config['SQL']['Host'],$config['SQL']['Username'],$config['SQL']['Password'],$config['SQL']['Database']);

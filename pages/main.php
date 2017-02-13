@@ -1,3 +1,4 @@
+<?php if($_SESSION['Loggedon']){ ?>
 <script src="//<?= $_SERVER['SERVER_NAME']; ?>/inc/js/jquery-cookie.js"></script>
 <script>
 $(document).ready(function () {
@@ -66,3 +67,4 @@ $(document).ready(function () {
 <div class="row">
 
 </div>
+<?php }else{ include ('login.php');} ?>

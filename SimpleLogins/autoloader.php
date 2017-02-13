@@ -2,7 +2,7 @@
 <?php
 session_start();
 if(!file_exists(DIRNAME(__FILE__) . '/lockfile')){
-	echo "This appears to be a fresh install, please head over to <a href=\"SimpleLogins/install.php\">this</a> page to start the configuration";
+	echo "This appears to be an unconfigured instance of SimpleLogins, please head over to <a href=\"SimpleLogins/install.php\">this</a> page to start the configuration";
 	exit;
 }else{
 	// Check if the `usersystem.class.php` exists

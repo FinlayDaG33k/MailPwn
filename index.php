@@ -21,22 +21,18 @@ session_start();
 
 		<div class="container-fluid">
 			<?php
-			 	if($_SESSION['Loggedon']){
-					$disallowed_paths = array('header', 'footer');
-					if (!empty($_GET['page'])) {
-						$tmp_page = basename($_GET['page']);
-						if (!in_array($tmp_action, $disallowed_paths) && file_exists("pages/{$tmp_page}.php")) {
-							$page = $tmp_page;
-						} else {
-							$page = 'error';
-						}
-					}else{
-    				$page = 'main';
+				$disallowed_paths = array('header', 'footer');
+				if (!empty($_GET['page'])) {
+					$tmp_page = basename($_GET['page']);
+					if (!in_array($tmp_action, $disallowed_paths) && file_exists("pages/{$tmp_page}.php")) {
+						$page = $tmp_page;
+					} else {
+						$page = 'error';
 					}
-					include("pages/".$page . ".php");
 				}else{
-					include("pages/login.php");
+    			$page = 'main';
 				}
+				include("pages/".$page . ".php");
 			?>
 		</div>
 	</body>
